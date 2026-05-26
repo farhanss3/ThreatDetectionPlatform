@@ -212,16 +212,3 @@ Democratize detection content with collaboration features:
 
 ThreatDetectionPlatform becomes a shared security knowledge network: detections are not static artifacts, but continuously improved, testable, and transparent defenses co-developed by practitioners, analysts, and threat researchers.
 
-## Execution Artifacts Added
-
-To turn this blueprint into implementation work, see:
-
-- `docs/NEXT_STEPS.md` for a 12-week delivery plan and immediate priority tickets.
-- `schemas/detection.schema.json` for the initial detection contract.
-- `detections/examples/t1059_powershell/` for an end-to-end sample detection package.
-
-## Open-Source Detection Library
-
-A starter detection library is available at `detections/library/` with curated rules normalized into the project schema and mapped to MITRE ATT&CK.
-
-See `docs/DETECTION_LIBRARY.md` for curation details and next curator tasks.
