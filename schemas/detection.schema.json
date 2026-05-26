@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://threatdetectionplatform.local/schemas/detection.schema.json",
+  "title": "Detection",
+  "type": "object",
+  "required": ["id", "title", "status", "severity", "query", "mappings", "tests"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^TDP-[A-Z0-9_-]+$" },
+    "title": { "type": "string", "minLength": 5 },
+    "status": { "type": "string", "enum": ["draft", "review", "production", "deprecated"] },
+    "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+    "description": { "type": "string" },
+    "query": {
+      "type": "object",
+      "required": ["language", "expression"],
+      "properties": {
+        "language": { "type": "string", "enum": ["sigma", "eql", "kql", "spl", "sql", "lucene"] },
+        "expression": { "type": "string", "minLength": 3 }
+      },
+      "additionalProperties": false
+    },
+    "mappings": {
+      "type": "object",
+      "required": ["attack"],
+      "properties": {
+        "attack": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["technique_id", "tactic"],
+            "properties": {
+              "technique_id": { "type": "string", "pattern": "^T[0-9]{4}(\\.[0-9]{3})?$" },
+              "tactic": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "atlas": { "type": "array", "items": { "type": "string" } },
+        "d3fend": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "tests": {
+      "type": "object",
+      "required": ["positive", "negative"],
+      "properties": {
+        "positive": { "type": "array", "items": { "type": "string" } },
+        "negative": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["name", "url", "license"],
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "license": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -211,3 +211,4 @@ Democratize detection content with collaboration features:
 ## Long-Term Outcome
 
 ThreatDetectionPlatform becomes a shared security knowledge network: detections are not static artifacts, but continuously improved, testable, and transparent defenses co-developed by practitioners, analysts, and threat researchers.
+

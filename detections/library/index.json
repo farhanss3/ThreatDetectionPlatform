@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "library": [
+    "detections/library/execution/office_spawns_powershell_encoded.json",
+    "detections/library/persistence/registry_run_key_modification.json",
+    "detections/library/credential_access/lsass_memory_dump_access.json",
+    "detections/library/defense_evasion/clear_windows_event_logs.json",
+    "detections/library/command_and_control/suspicious_dns_tunneling_pattern.json"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "TDP-T1059-POWERSHELL-ENCODED",
+  "title": "Office child process starts PowerShell with encoded command",
+  "status": "draft",
+  "severity": "high",
+  "description": "Detects potential malicious script execution initiated by Office applications.",
+  "query": {
+    "language": "sigma",
+    "expression": "selection: parent_process_name in [WINWORD.EXE, EXCEL.EXE] and process_name=\"powershell.exe\" and command_line contains \"-enc\""
+  },
+  "mappings": {
+    "attack": [
+      {
+        "technique_id": "T1059.001",
+        "tactic": "execution"
+      }
+    ],
+    "atlas": [],
+    "d3fend": []
+  },
+  "tests": {
+    "positive": [
+      "tests/positive/office_to_powershell_encoded.json"
+    ],
+    "negative": [
+      "tests/negative/admin_powershell_session.json"
+    ]
+  }
+}

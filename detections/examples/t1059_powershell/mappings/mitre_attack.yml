@@ -1,0 +1,4 @@
+techniques:
+  - id: T1059.001
+    tactic: execution
+    rationale: Encoded PowerShell from Office child process suggests scripted execution behavior.

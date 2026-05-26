@@ -1,0 +1,22 @@
+{
+  "id": "TDP-LIB-T1070-001-CLEAR-LOGS",
+  "title": "Windows event log clearing via wevtutil",
+  "status": "draft",
+  "severity": "high",
+  "description": "Detects log clearing commands that may indicate defense evasion.",
+  "query": {
+    "language": "sigma",
+    "expression": "selection: Image|endswith: '\\wevtutil.exe' and CommandLine|contains: ' cl '"
+  },
+  "mappings": {
+    "attack": [{ "technique_id": "T1070.001", "tactic": "defense-evasion" }],
+    "atlas": [],
+    "d3fend": []
+  },
+  "tests": { "positive": [], "negative": [] },
+  "source": {
+    "name": "SigmaHQ",
+    "url": "https://github.com/SigmaHQ/sigma",
+    "license": "DRL 1.1"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "TDP-LIB-T1071-004-DNS-TUNNELING",
+  "title": "Potential DNS tunneling via long/high-entropy queries",
+  "status": "draft",
+  "severity": "medium",
+  "description": "Detects DNS query patterns indicative of tunneling channels.",
+  "query": {
+    "language": "eql",
+    "expression": "dns where length(question.name) > 50 and question.registered_domain in (\"example-malicious.test\")"
+  },
+  "mappings": {
+    "attack": [{ "technique_id": "T1071.004", "tactic": "command-and-control" }],
+    "atlas": [],
+    "d3fend": []
+  },
+  "tests": { "positive": [], "negative": [] },
+  "source": {
+    "name": "Elastic Detection Rules",
+    "url": "https://github.com/elastic/detection-rules",
+    "license": "Elastic License v2"
+  }
+}

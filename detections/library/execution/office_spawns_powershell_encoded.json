@@ -1,0 +1,22 @@
+{
+  "id": "TDP-LIB-T1059-001-OFFICE-PS-ENC",
+  "title": "Office process spawns PowerShell with encoded command",
+  "status": "draft",
+  "severity": "high",
+  "description": "Detects Office child process launching PowerShell with encoded command flags.",
+  "query": {
+    "language": "sigma",
+    "expression": "selection: ParentImage|endswith: ['\\WINWORD.EXE','\\EXCEL.EXE','\\POWERPNT.EXE'] and Image|endswith: '\\powershell.exe' and CommandLine|contains: [' -enc ',' -encodedcommand ']"
+  },
+  "mappings": {
+    "attack": [{ "technique_id": "T1059.001", "tactic": "execution" }],
+    "atlas": [],
+    "d3fend": []
+  },
+  "tests": { "positive": [], "negative": [] },
+  "source": {
+    "name": "SigmaHQ",
+    "url": "https://github.com/SigmaHQ/sigma",
+    "license": "DRL 1.1"
+  }
+}
