@@ -1,0 +1,22 @@
+{
+  "id": "TDP-LIB-T1003-001-LSASS-ACCESS",
+  "title": "Potential LSASS memory dump access",
+  "status": "draft",
+  "severity": "critical",
+  "description": "Detects process access patterns consistent with LSASS credential dumping.",
+  "query": {
+    "language": "sigma",
+    "expression": "selection: TargetImage|endswith: '\\lsass.exe' and GrantedAccess|contains: ['0x1010','0x1410','0x1fffff']"
+  },
+  "mappings": {
+    "attack": [{ "technique_id": "T1003.001", "tactic": "credential-access" }],
+    "atlas": [],
+    "d3fend": []
+  },
+  "tests": { "positive": [], "negative": [] },
+  "source": {
+    "name": "SigmaHQ",
+    "url": "https://github.com/SigmaHQ/sigma",
+    "license": "DRL 1.1"
+  }
+}

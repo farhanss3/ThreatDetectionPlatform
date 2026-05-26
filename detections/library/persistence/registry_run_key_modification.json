@@ -1,0 +1,22 @@
+{
+  "id": "TDP-LIB-T1547-001-RUNKEY-MOD",
+  "title": "Suspicious registry Run key modification",
+  "status": "draft",
+  "severity": "medium",
+  "description": "Detects changes to user or machine Run keys often used for persistence.",
+  "query": {
+    "language": "sigma",
+    "expression": "selection: TargetObject|contains: ['\\Software\\Microsoft\\Windows\\CurrentVersion\\Run','\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce'] and EventType: 'SetValue'"
+  },
+  "mappings": {
+    "attack": [{ "technique_id": "T1547.001", "tactic": "persistence" }],
+    "atlas": [],
+    "d3fend": []
+  },
+  "tests": { "positive": [], "negative": [] },
+  "source": {
+    "name": "SigmaHQ",
+    "url": "https://github.com/SigmaHQ/sigma",
+    "license": "DRL 1.1"
+  }
+}
