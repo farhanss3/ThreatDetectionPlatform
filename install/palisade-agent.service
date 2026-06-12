@@ -1,0 +1,16 @@
+[Unit]
+Description=Palisade detection agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/palisade/palisade_agent.py --server %i --state /var/lib/palisade/state.json
+Restart=always
+RestartSec=10
+User=root
+StateDirectory=palisade
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

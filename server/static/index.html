@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palisade — Detection Platform</title>
+<style>
+  /* ── Palisade design tokens ────────────────────────────────────────────
+     Subject: a detection-engineering control plane for blue teams.
+     Direction: "instrument panel" — slate steel ground, signal-amber as the
+     single alert accent, IBM Plex Mono for the data the analyst actually reads.
+     Severity is the only place color runs hot. Everything else stays cool. */
+  :root{
+    --bg:#0f1216; --panel:#161b22; --panel-2:#1c232c; --line:#2a323d;
+    --ink:#e7edf3; --ink-dim:#8b97a6; --ink-faint:#5d6976;
+    --amber:#ffb02e; --steel:#5aa9e6;
+    --crit:#ff5d5d; --high:#ff8a3d; --med:#ffc94d; --low:#7ec97e; --info:#6fb1d8;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:"IBM Plex Sans",-apple-system,system-ui,sans-serif;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+  a{color:var(--steel);text-decoration:none}
+  ::selection{background:var(--amber);color:#1a1206}
+
+  header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;background:var(--bg);z-index:20}
+  .logo{font-family:var(--mono);font-weight:600;letter-spacing:.14em;font-size:15px}
+  .logo b{color:var(--amber)}
+  .tag{font-family:var(--mono);color:var(--ink-faint);font-size:11px;letter-spacing:.1em}
+  nav{margin-left:auto;display:flex;gap:2px}
+  nav button{background:none;border:none;color:var(--ink-dim);font-family:var(--mono);font-size:12px;
+    letter-spacing:.08em;padding:8px 14px;cursor:pointer;border-radius:6px;text-transform:uppercase}
+  nav button:hover{color:var(--ink);background:var(--panel)}
+  nav button.on{color:var(--amber);background:var(--panel)}
+
+  main{padding:22px;max-width:1280px;margin:0 auto}
+  .view{display:none}.view.on{display:block}
+
+  .row{display:flex;gap:18px;flex-wrap:wrap}
+  .stat{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .stat .n{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1}
+  .stat .l{color:var(--ink-dim);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin-top:8px}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 14px}
+  input,select{background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:13px;padding:9px 11px;border-radius:7px}
+  input:focus,select:focus{outline:none;border-color:var(--amber)}
+  input[type=search]{flex:1;min-width:220px}
+
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);padding:9px 12px;border-bottom:1px solid var(--line);font-weight:500}
+  td{padding:11px 12px;border-bottom:1px solid var(--panel-2);vertical-align:top}
+  tr.det{cursor:pointer}
+  tr.det:hover td{background:var(--panel)}
+  .rid{font-family:var(--mono);color:var(--steel);font-size:12px;white-space:nowrap}
+  .ttl{font-weight:500}
+  .desc{color:var(--ink-dim);font-size:12px;margin-top:3px;max-width:560px}
+
+  .sev{font-family:var(--mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+    padding:3px 8px;border-radius:5px;display:inline-block}
+  .sev.critical{color:var(--crit);background:rgba(255,93,93,.12)}
+  .sev.high{color:var(--high);background:rgba(255,138,61,.12)}
+  .sev.medium{color:var(--med);background:rgba(255,201,77,.12)}
+  .sev.low{color:var(--low);background:rgba(126,201,126,.12)}
+  .pill{font-family:var(--mono);font-size:10.5px;color:var(--ink-dim);border:1px solid var(--line);
+    padding:2px 7px;border-radius:20px;margin-right:5px}
+
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:30}
+  .scrim.on{display:block}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(620px,94vw);background:var(--panel);
+    border-left:1px solid var(--line);z-index:31;transform:translateX(100%);transition:transform .22s ease;
+    overflow-y:auto;padding:24px}
+  .drawer.on{transform:translateX(0)}
+  .drawer h2{font-size:18px;margin:6px 0 2px}
+  .drawer .meta{color:var(--ink-dim);font-family:var(--mono);font-size:12px;margin-bottom:16px}
+  .sect{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-faint);margin:20px 0 8px}
+  pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:13px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;color:#cfe6ff;white-space:pre-wrap;word-break:break-word;margin:0}
+  .tabs{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+  .tabs button{background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
+    font-family:var(--mono);font-size:11px;padding:6px 11px;border-radius:6px;cursor:pointer}
+  .tabs button.on{color:var(--amber);border-color:var(--amber)}
+  .copy{float:right;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
+    font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:6px;cursor:pointer}
+  .copy:hover{color:var(--amber)}
+  .toggle{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);
+    font-size:12px;padding:7px 13px;border-radius:7px;cursor:pointer}
+  .dot{height:8px;width:8px;border-radius:50%;display:inline-block;margin-right:7px}
+  .dot.on{background:var(--low);box-shadow:0 0 7px var(--low)}
+  .dot.off{background:var(--ink-faint)}
+
+  /* coverage */
+  .cov{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}
+  .cell{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:13px;position:relative;overflow:hidden}
+  .cell .bar{position:absolute;inset:0;background:var(--amber);opacity:.13}
+  .cell .t{font-family:var(--mono);font-size:11px;text-transform:capitalize;position:relative}
+  .cell .c{font-family:var(--mono);font-size:26px;font-weight:600;margin-top:6px;position:relative}
+  .empty{color:var(--ink-faint);text-align:center;padding:40px;font-family:var(--mono);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo"><b>◢</b> PALISADE</span>
+  <span class="tag">DETECTION&nbsp;CONTROL&nbsp;PLANE</span>
+  <nav>
+    <button data-v="library" class="on">Library</button>
+    <button data-v="coverage">Coverage</button>
+    <button data-v="fleet">Fleet</button>
+    <button data-v="alerts">Alerts</button>
+  </nav>
+</header>
+
+<main>
+  <!-- LIBRARY -->
+  <section class="view on" id="v-library">
+    <div class="row" id="stats"></div>
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="search title, id, description…">
+      <select id="fSev"><option value="">all severities</option>
+        <option>critical</option><option>high</option><option>medium</option><option>low</option></select>
+      <select id="fPlat"><option value="">all platforms</option>
+        <option>windows</option><option>linux</option><option>macos</option></select>
+    </div>
+    <table><thead><tr><th>Rule ID</th><th>Detection</th><th>Severity</th><th>Platforms</th><th>ATT&CK</th><th>State</th></tr></thead>
+      <tbody id="detRows"></tbody></table>
+  </section>
+
+  <!-- COVERAGE -->
+  <section class="view" id="v-coverage">
+    <p class="tag" style="margin:0 0 8px">DETECTIONS&nbsp;PER&nbsp;ATT&CK&nbsp;TACTIC</p>
+    <div class="cov" id="cov"></div>
+  </section>
+
+  <!-- FLEET -->
+  <section class="view" id="v-fleet">
+    <div class="row" id="fleetStats"></div>
+    <div class="toolbar"></div>
+    <table><thead><tr><th>Host</th><th>OS</th><th>Arch</th><th>Agent</th><th>Last seen</th><th>Status</th></tr></thead>
+      <tbody id="agentRows"></tbody></table>
+  </section>
+
+  <!-- ALERTS -->
+  <section class="view" id="v-alerts">
+    <table><thead><tr><th>Time</th><th>Severity</th><th>Rule</th><th>Host</th><th>Context</th></tr></thead>
+      <tbody id="alertRows"></tbody></table>
+  </section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<script>
+const $ = s => document.querySelector(s);
+const api = (p,o) => fetch(p,o).then(r=>r.json());
+const SEV_RANK = {critical:0,high:1,medium:2,low:3};
+const TARGETS = [["splunk","Splunk SPL"],["sentinel","Sentinel KQL"],
+                 ["elastic","Elastic"],["crowdstrike","CrowdStrike LogScale"]];
+let DETS = [];
+
+// nav
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); $('#v-'+b.dataset.v).classList.add('on');
+  if(b.dataset.v==='coverage') loadCoverage();
+  if(b.dataset.v==='fleet') loadFleet();
+  if(b.dataset.v==='alerts') loadAlerts();
+});
+
+// library
+function sevTag(s){return `<span class="sev ${s}">${s}</span>`}
+async function loadLibrary(){
+  DETS = await api('/api/detections');
+  const tot=DETS.length, en=DETS.filter(d=>d.enabled).length;
+  const crit=DETS.filter(d=>d.severity==='critical').length;
+  const plats=new Set(); DETS.forEach(d=>d.platforms.forEach(p=>plats.add(p)));
+  $('#stats').innerHTML=[
+    [tot,'detections'],[en,'enabled'],[crit,'critical'],[plats.size,'platforms covered']
+  ].map(([n,l])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+  render();
+}
+function render(){
+  const q=$('#q').value.toLowerCase(), sev=$('#fSev').value, plat=$('#fPlat').value;
+  const rows=DETS
+    .filter(d=>!q||(d.title+d.description+d.rule_id).toLowerCase().includes(q))
+    .filter(d=>!sev||d.severity===sev)
+    .filter(d=>!plat||d.platforms.includes(plat))
+    .sort((a,b)=>SEV_RANK[a.severity]-SEV_RANK[b.severity]);
+  $('#detRows').innerHTML = rows.length? rows.map(d=>`
+    <tr class="det" data-id="${d.id}">
+      <td class="rid">${d.rule_id}</td>
+      <td><div class="ttl">${d.title}</div><div class="desc">${d.description}</div></td>
+      <td>${sevTag(d.severity)}</td>
+      <td>${d.platforms.map(p=>`<span class="pill">${p}</span>`).join('')}</td>
+      <td class="rid">${(d.attack.techniques||[]).join(' ')||'—'}</td>
+      <td><span class="dot ${d.enabled?'on':'off'}"></span><span class="tag">${d.enabled?'ON':'OFF'}</span></td>
+    </tr>`).join('') : `<tr><td colspan="6" class="empty">No detections match these filters.</td></tr>`;
+  document.querySelectorAll('tr.det').forEach(r=>r.onclick=()=>openDrawer(r.dataset.id));
+}
+['#q','#fSev','#fPlat'].forEach(s=>$(s).addEventListener('input',render));
+
+// drawer w/ live translation
+async function openDrawer(id){
+  const d = DETS.find(x=>x.id===id);
+  $('#scrim').classList.add('on'); $('#drawer').classList.add('on');
+  $('#drawer').innerHTML=`
+    <h2>${d.title}</h2>
+    <div class="meta">${d.rule_id} · ${d.status} · ${sevTag(d.severity)}</div>
+    <p style="color:var(--ink-dim)">${d.description}</p>
+    <div class="sect">MITRE ATT&CK</div>
+    <div>${(d.attack.tactics||[]).map(t=>`<span class="pill">${t}</span>`).join('')}
+         ${(d.attack.techniques||[]).map(t=>`<span class="pill">${t}</span>`).join('')||'—'}</div>
+    <div class="sect">Logic (Sigma-style)</div>
+    <pre>${syntax(JSON.stringify(d.detection,null,2))}</pre>
+    <div class="sect">Vendor translation
+      <button class="toggle" id="tg">${d.enabled?'Disable rule':'Enable rule'}</button></div>
+    <div class="tabs" id="tabs"></div>
+    <div><button class="copy" id="cp">copy</button><pre id="q-out">…</pre></div>
+    ${d.references?.length?`<div class="sect">References</div>${d.references.map(r=>`<div><a href="${r}" target="_blank">${r}</a></div>`).join('')}`:''}`;
+  let target='splunk';
+  const tabs=$('#tabs');
+  tabs.innerHTML=TARGETS.map(([k,l])=>`<button data-t="${k}" class="${k==='splunk'?'on':''}">${l}</button>`).join('');
+  async function show(t){
+    target=t;
+    tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+    const o=await api(`/api/detections/${d.id}/translate?target=${t}`);
+    $('#q-out').textContent=o.query;
+  }
+  tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+  $('#cp').onclick=()=>{navigator.clipboard.writeText($('#q-out').textContent);$('#cp').textContent='copied';setTimeout(()=>$('#cp').textContent='copy',1200)};
+  $('#tg').onclick=async()=>{await api(`/api/detections/${d.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:!d.enabled})});closeDrawer();await loadLibrary()};
+  show('splunk');
+}
+function syntax(s){return s.replace(/("(\\.|[^"\\])*")(\s*:)?/g,(m,p1,_,c)=>c?`<span style="color:#9fd5ff">${p1}</span>${c}`:`<span style="color:#ffd9a0">${p1}</span>`)}
+function closeDrawer(){$('#scrim').classList.remove('on');$('#drawer').classList.remove('on')}
+$('#scrim').onclick=closeDrawer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+// coverage
+async function loadCoverage(){
+  const c=await api('/api/coverage');
+  const max=Math.max(1,...c.tactics.map(t=>t.count));
+  $('#cov').innerHTML=c.tactics.map(t=>`
+    <div class="cell"><div class="bar" style="transform:scaleX(${t.count/max});transform-origin:left"></div>
+      <div class="t">${t.tactic.replace(/-/g,' ')}</div><div class="c">${t.count}</div></div>`).join('');
+}
+// fleet
+async function loadFleet(){
+  const a=await api('/api/agents');
+  const on=a.filter(x=>x.online).length;
+  $('#fleetStats').innerHTML=[[a.length,'agents enrolled'],[on,'online'],
+    [new Set(a.map(x=>x.os)).size,'platforms']]
+    .map(([n,l])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+  $('#agentRows').innerHTML=a.length? a.map(x=>`
+    <tr><td class="ttl">${x.hostname}</td><td><span class="pill">${x.os}</span></td>
+    <td class="rid">${x.arch||'—'}</td><td class="rid">v${x.version}</td>
+    <td class="rid">${x.last_seen?ago(x.last_seen):'—'}</td>
+    <td><span class="dot ${x.online?'on':'off'}"></span>${x.online?'online':'offline'}</td></tr>`).join('')
+    : `<tr><td colspan="6" class="empty">No agents enrolled yet. Install one — see the README.</td></tr>`;
+}
+// alerts
+async function loadAlerts(){
+  const a=await api('/api/alerts');
+  $('#alertRows').innerHTML=a.length? a.map(x=>`
+    <tr><td class="rid">${new Date(x.created_at*1000).toLocaleString()}</td>
+    <td>${sevTag(x.severity)}</td>
+    <td><div class="rid">${x.rule_id}</div><div class="ttl">${x.title}</div></td>
+    <td class="ttl">${x.hostname}<div class="tag">${x.os}</div></td>
+    <td class="desc">${esc(x.context.CommandLine||x.context.TargetFilename||JSON.stringify(x.context))}</td></tr>`).join('')
+    : `<tr><td colspan="5" class="empty">No alerts. Agents report here when a rule fires.</td></tr>`;
+}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function ago(t){const s=Date.now()/1000-t;if(s<60)return Math.floor(s)+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago'}
+
+loadLibrary();
+setInterval(()=>{if($('#v-alerts').classList.contains('on'))loadAlerts();
+                 if($('#v-fleet').classList.contains('on'))loadFleet();},10000);
+</script>
+</body>
+</html>
